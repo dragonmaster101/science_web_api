@@ -1,4 +1,5 @@
 build : main.go 
+	$(MAKE) -C database
 	@go vet main.go
 	@go fmt main.go
 	@golint main.go
@@ -10,4 +11,5 @@ run : build
 all : run 
 
 clean : 
+	$(MAKE) clean -C database
 	@rm main 
