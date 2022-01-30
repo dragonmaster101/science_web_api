@@ -2,8 +2,8 @@ package database
 
 import (
 	"context"
-	"log"
 	"fmt"
+	"log"
 	"strconv"
 
 	"hash/fnv"
@@ -193,4 +193,44 @@ func (i *Instance) UpdateUserInfo(userId string , newAcc *NilAccount) (error) {
 	i.database.NewRef("users/" + prevAcc.Key()).Set(i.ctx , prevAcc);
 
 	return nil;
+}
+
+/*
+	?This DataType acts as the form for the AuthenticateUserInfo method
+*/
+type AuthenticatorForm struct {
+	UserId string	 `json:"userId"` 
+	Password string  `json:"password"`
+	Hashed bool 	 `json:"hashed"`
+}
+
+/*
+	*Validates the given credentials in the firebase database
+*/
+func (i *Instance) AuthenticateUserInfo(form *AuthenticatorForm) (bool , error){
+	trueAccount , getAccountErr := i.GetUserInfo(form.UserId);
+	if getAccountErr != nil {
+		return false , fmt.Errorf("this Account does not exist. Recieved this Error when retrieving account : %v" , getAccountErr);
+	}
+
+
+	switch form.Hashed {
+	case false:
+		var pwd string = form.Password;
+		pwd = HashAsString(pwd);
+		if pwd != trueAccount.Password {
+			return false , fmt.Errorf("passwords do not match. you sent password = %v , got password = %v" , pwd , trueAccount.Password);
+		} else {
+			return true , nil;
+		}
+	case true:
+		if form.Password != trueAccount.Password {
+			return false , fmt.Errorf("passwords do not match. you sent password = %v , got password = %v" , form.Password , trueAccount.Password);
+		} else {
+			return true , nil;
+		}
+
+	default:
+		return false, fmt.Errorf("you have not specified if the password is hashed or not using the hashed field");
+	}
 }
