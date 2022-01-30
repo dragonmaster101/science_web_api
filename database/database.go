@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"log"
+	"fmt"
 	"strconv"
 
 	"hash/fnv"
@@ -52,6 +53,21 @@ type Account struct {
 	Username string `json:"username"`
 }
 
+func (a *Account) Init(email , name , username , password string){
+	a.Email = email;
+	a.Name = name;
+	a.Username = username;
+	a.Password = HashAsString(password);
+}
+
+func (a *Account) Key() string {
+	return a.Username;
+}
+
+func (a *Account) GetPath() string {
+	return "users/" + a.Key();
+}
+
 /*
 	*An account type for handling nil fields
 */
@@ -91,10 +107,90 @@ type Instance struct {
 	ctx      context.Context
 }
 
+const usersPath = "users/";
+
 /*
 	*Acts as a constructor for the Instance type
 */
 func (i *Instance) Init(ctx context.Context, database *db.Client) {
 	i.ctx = ctx
 	i.database = database
+}
+
+/*
+	?Adds a new entry in the usersPath of the firebases database with the given account details
+*/
+func (i *Instance) PostUserInfo(acc *Account) (err error){
+	err = i.database.NewRef(usersPath + acc.Key()).Set(i.ctx , *acc);
+
+	return err;
+} 
+
+/*
+	?Gets user information with the given userId from the firebase database
+*/
+func (i *Instance) GetUserInfo(userId string) (acc *Account , err error) {
+	acc = &Account{};
+	err = i.database.NewRef(usersPath + userId).Get(i.ctx , acc);
+
+	return acc , err;
+}
+
+/*
+	?Updates the User information given the userId i.e email or username. The caller has to fill in the fields to update and the remaining fields should be left nil in the struct
+
+	
+	E.g 
+	{
+		username: "Username"
+	} This struct is a valid parameter
+*/
+func (i *Instance) UpdateUserInfo(userId string , newAcc *NilAccount) (error) {
+	
+	// *reads the account to be updated and updates it with the non-nil fields of new account and writes it again
+	// *this way all the previous account details are not jeopardised and only the updated fields have any chance of corruption
+	prevAcc , readErr := i.GetUserInfo(userId);
+
+	if readErr != nil {
+		return readErr;
+	}
+
+	switch newAcc {
+	case nil : 
+		return fmt.Errorf("err account with updated information is nil");
+	default:
+	}
+
+	switch newAcc.Email {
+	case nil:
+		// prevAcc.Email = prevAcc.Email;
+	default:
+		prevAcc.Email = *newAcc.Email;
+	}
+
+	switch newAcc.Name {
+	case nil:
+		// prevAcc.Name = prevAcc.Name;
+	default:
+		prevAcc.Name = *newAcc.Name;
+	}
+
+	switch newAcc.Username {
+	case nil:
+		// prevAcc.Email = prevAcc.Email;
+	default:
+		prevAcc.Username = *newAcc.Username;
+	}
+
+	switch newAcc.Password {
+	case nil:
+		// nothing
+	default:
+		prevAcc.Password = *newAcc.Password;
+	}
+
+
+	i.database.NewRef("users/" + prevAcc.Key()).Set(i.ctx , prevAcc);
+
+	return nil;
 }
