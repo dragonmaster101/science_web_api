@@ -14,8 +14,8 @@ import (
 )
 
 /*
-	This function sets up the firebase app and the firebase database and also authenticates the instance
-	This function returns an Instance type for manipulating the database
+	?This function sets up the firebase app and the firebase database and also authenticates the instance
+	?This function returns an Instance type for manipulating the database
 */
 func Setup() *Instance {
 	opt := option.WithCredentialsFile("codexia-dc073-firebase-adminsdk-v40vf-bd80ee0a87.json")
@@ -43,7 +43,7 @@ func Setup() *Instance {
 }
 
 /*
-	The Actual Account type which will be stored in the database
+	*The Actual Account type which will be stored in the database
 */
 type Account struct {
 	Email    string `json:"email"`
@@ -53,7 +53,7 @@ type Account struct {
 }
 
 /*
-	An account type for handling nil fields
+	*An account type for handling nil fields
 */
 type NilAccount struct {
 	Email    *string `json:"email"`
@@ -63,7 +63,7 @@ type NilAccount struct {
 }
 
 /*
-	Hashes a string and returns the hash as an unsigned 32 bit integer
+	*Hashes a string and returns the hash as an unsigned 32 bit integer
 */
 func Hash(s string) uint32{
 	
@@ -76,7 +76,7 @@ func Hash(s string) uint32{
 }
 
 /*
-	Returns hashed string as another string
+	*Returns hashed string as another string
 */
 func HashAsString(s string) string {
 	h := Hash(s);
@@ -84,7 +84,7 @@ func HashAsString(s string) string {
 }
 
 /*
-	A Type which contains all the methods required to manipulate the firebase database instance
+	*A Type which contains all the methods required to manipulate the firebase database instance
 */
 type Instance struct {
 	database *db.Client
@@ -92,7 +92,7 @@ type Instance struct {
 }
 
 /*
-	Acts as a constructor for the Instance type
+	*Acts as a constructor for the Instance type
 */
 func (i *Instance) Init(ctx context.Context, database *db.Client) {
 	i.ctx = ctx
