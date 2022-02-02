@@ -17,13 +17,13 @@ import (
 /*Setup : This function sets up the firebase app and the firebase database and also authenticates the instance
 This function returns an Instance type for manipulating the database
 */
-func Setup() *Instance {
-	opt := option.WithCredentialsFile("codexia-dc073-firebase-adminsdk-v40vf-bd80ee0a87.json")
+func Setup(credentialFile string, url string) *Instance {
+	opt := option.WithCredentialsFile(credentialFile)
 
 	ctx := context.Background()
 
 	config := &firebase.Config{
-		DatabaseURL: "https://codexia-dc073-default-rtdb.asia-southeast1.firebasedatabase.app/",
+		DatabaseURL: url,
 	}
 
 	app, err := firebase.NewApp(ctx, config, opt)
@@ -97,6 +97,13 @@ func HashAsString(s string) string {
 	return strconv.Itoa(int(h))
 }
 
+/*IsHash : Returns the boolean indicator of whether or not the given string is a hash or not in the context of passwords*/
+func IsHash(str string) bool {
+	_ , err := strconv.Atoi(str);
+	
+	return err == nil;
+}
+
 /*Instance : A Type which contains all the methods required to manipulate the firebase database instance
  */
 type Instance struct {
@@ -114,6 +121,9 @@ func (i *Instance) Init(ctx context.Context, database *db.Client) {
 
 /*PostUserInfo : Adds a new entry in the usersPath of the firebases database with the given account details */
 func (i *Instance) PostUserInfo(acc *Account) (err error) {
+	if !IsHash(acc.Password) {
+		acc.Password = HashAsString(acc.Password);
+	}
 	err = i.database.NewRef(usersPath+acc.Key()).Set(i.ctx, *acc)
 
 	return err

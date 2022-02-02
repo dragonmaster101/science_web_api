@@ -21,7 +21,8 @@ import (
 func main() {
 	router := gin.Default()
 
-	db := database.Setup()
+	db := database.Setup("school-exhibition-firebase-adminsdk-lubef-117af78def.json",
+		"https://school-exhibition-default-rtdb.asia-southeast1.firebasedatabase.app/")
 
 	router.GET("/users/search/:userid", func(c *gin.Context) {
 		userID := c.Param("userid")
