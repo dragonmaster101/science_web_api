@@ -4,6 +4,9 @@ format : main.go
 	@go fmt main.go
 	@golint main.go
 
+test : 
+	@$(MAKE) test -C database
+
 build : format
 	$(MAKE) build -C database
 	@go build main.go
@@ -11,8 +14,9 @@ build : format
 run : build 
 	@./main
 
-all : run 
+all : 
+	@$(MAKE) test
+	@$(MAKE) build
 
 clean : 
-	$(MAKE) clean -C database
-	@rm main 
+	@rm main
