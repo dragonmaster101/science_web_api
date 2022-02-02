@@ -99,9 +99,9 @@ func HashAsString(s string) string {
 
 /*IsHash : Returns the boolean indicator of whether or not the given string is a hash or not in the context of passwords*/
 func IsHash(str string) bool {
-	_ , err := strconv.Atoi(str);
-	
-	return err == nil;
+	_, err := strconv.Atoi(str)
+
+	return err == nil
 }
 
 /*Instance : A Type which contains all the methods required to manipulate the firebase database instance
@@ -122,7 +122,7 @@ func (i *Instance) Init(ctx context.Context, database *db.Client) {
 /*PostUserInfo : Adds a new entry in the usersPath of the firebases database with the given account details */
 func (i *Instance) PostUserInfo(acc *Account) (err error) {
 	if !IsHash(acc.Password) {
-		acc.Password = HashAsString(acc.Password);
+		acc.Password = HashAsString(acc.Password)
 	}
 	err = i.database.NewRef(usersPath+acc.Key()).Set(i.ctx, *acc)
 
