@@ -5,6 +5,7 @@ go 1.17
 require (
 	firebase.google.com/go/v4 v4.7.1
 	github.com/gin-gonic/gin v1.7.7
+	github.com/sarpdag/boyermoore v0.0.0-20210425165139-a89ed1b5913b
 	google.golang.org/api v0.66.0
 )
 

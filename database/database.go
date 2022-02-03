@@ -10,6 +10,8 @@ import (
 
 	"google.golang.org/api/option"
 
+	"github.com/dragonmaster101/science_web_api/algorithms"
+
 	firebase "firebase.google.com/go/v4"
 	db "firebase.google.com/go/v4/db"
 )
@@ -291,4 +293,39 @@ func (i *Instance) GetPostsInfo() ([]Post , error) {
 	}
 
 	return posts , nil;
+}
+
+func (i *Instance) SearchPostsTitle(query string) ([]Post , error) {
+	ref := i.database.NewRef("");
+	postsRef := ref.Child(postsPath);
+
+	var titles []string;
+	var posts []Post;
+
+	titleResults , titleQueryErr := postsRef.OrderByChild("title").GetOrdered(i.ctx);
+	if titleQueryErr != nil {
+		return nil , fmt.Errorf("error querying posts by titles from firebase database , err : %v" , titleQueryErr);
+	}
+
+	for _ , title := range titleResults {
+		var post Post 
+		if err := title.Unmarshal(&post); err != nil {
+			return nil , fmt.Errorf("error decoding Post data from title query Results , err : %v" , err);
+		}
+		titles = append(titles , post.Title);
+		posts = append(posts, post);
+	}
+
+	indices , ok := algorithms.SearchStrings(titles , query);
+	if !ok {
+		return nil , nil;
+	}
+
+	var filteredPosts []Post;
+
+	for _ , index := range indices {
+		filteredPosts = append(filteredPosts , posts[index]);
+	}
+
+	return filteredPosts , nil;
 }
