@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"strconv"
 
 	"hash/fnv"
@@ -296,6 +297,8 @@ func (i *Instance) GetPostsInfo() ([]Post , error) {
 }
 
 func (i *Instance) SearchPostsTitle(query string) ([]Post , error) {
+	query = strings.ToLower(query);
+
 	ref := i.database.NewRef("");
 	postsRef := ref.Child(postsPath);
 
@@ -312,7 +315,7 @@ func (i *Instance) SearchPostsTitle(query string) ([]Post , error) {
 		if err := title.Unmarshal(&post); err != nil {
 			return nil , fmt.Errorf("error decoding Post data from title query Results , err : %v" , err);
 		}
-		titles = append(titles , post.Title);
+		titles = append(titles , strings.ToLower(post.Title));
 		posts = append(posts, post);
 	}
 
@@ -331,6 +334,8 @@ func (i *Instance) SearchPostsTitle(query string) ([]Post , error) {
 }
 
 func (i *Instance) SearchPostsAuthor(query string) ([]Post , error) {
+	query = strings.ToLower(query);
+
 	ref := i.database.NewRef("");
 	postsRef := ref.Child(postsPath);
 
@@ -347,7 +352,7 @@ func (i *Instance) SearchPostsAuthor(query string) ([]Post , error) {
 		if err := author.Unmarshal(&post); err != nil {
 			return nil , fmt.Errorf("error decoding Post data from Author query Results , err : %v" , err);
 		}
-		authors = append(authors , post.Author);
+		authors = append(authors , strings.ToLower(post.Author));
 		posts = append(posts, post);
 	}
 

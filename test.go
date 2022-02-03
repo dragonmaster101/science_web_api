@@ -24,17 +24,17 @@ func main(){
 	// 	log.Fatal(err);
 	// }
 
-	results , err := db.GetPostsInfo()
-	if err != nil {
-		log.Fatal(err);
-	}
+	// results , err := db.GetPostsInfo()
+	// if err != nil {
+	// 	log.Fatal(err);
+	// }
 
-	log.Printf("results : \n");
-	for _ , result := range results {
-		log.Printf("Post : %v\n" , result);
-	}
+	// log.Printf("results : \n");
+	// for _ , result := range results {
+	// 	log.Printf("Post : %v\n" , result);
+	// }
 
-	fPosts , err := db.SearchPostsAuthor("Zain");
+	fPosts , err := db.SearchPostsAuthor("malik");
 	if err != nil {
 		log.Fatal(err);
 	}
