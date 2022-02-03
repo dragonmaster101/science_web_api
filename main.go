@@ -43,6 +43,24 @@ func main() {
 		c.Data(http.StatusOK, gin.MIMEJSON, jsonData)
 	})
 
+	/*router.GET Methods for the database.Post type*/
+
+	router.GET("/posts" , func(c *gin.Context) {
+		posts , fetchErr := db.GetPostsInfo();
+		if fetchErr != nil {
+			c.String(http.StatusBadRequest , "error fetching the posts , err : %v" , fetchErr);
+			return;
+		}
+
+		jsonData, jsonConversionError := json.Marshal(database.PostArray{Posts: posts})
+		if jsonConversionError != nil {
+			c.String(http.StatusBadRequest, "internal error converting account data into json , err : %v", jsonConversionError)
+			return;
+		}
+
+		c.Data(http.StatusOK, gin.MIMEJSON, jsonData)
+	})
+
 	router.POST("/users/create", func(c *gin.Context) {
 		account := database.Account{}
 
@@ -92,6 +110,27 @@ func main() {
 		}
 
 		c.String(http.StatusOK, "%v", result)
+	})
+
+	/*router.POST methods for the Post data type*/
+
+	router.POST("post/create" , func(c *gin.Context) {
+		var post database.Post;
+		
+		decodeErr := json.NewDecoder(c.Request.Body).Decode(&post);
+		if decodeErr != nil {
+			c.String(http.StatusBadRequest,
+				"error decoding the request body make sure you followed the proper format , err : %v", decodeErr)
+			return
+		}
+
+		createErr := db.CreatePostInfo(&post);
+		if createErr != nil {
+			c.String(http.StatusBadRequest , "error creating the post make sure you followed the proper format , err : %v" , createErr);
+			return; 
+		}
+
+		c.String(http.StatusOK , "Successfully created the post");
 	})
 
 	router.Run()

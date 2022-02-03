@@ -252,6 +252,10 @@ type Post struct {
 	Description string `json:"description"`
 }
 
+type PostArray struct {
+	Posts []Post `json:"posts"`
+}
+
 type NilPost struct {
 	Title  		*string `json:"title"`
 	Author 		*string `json:"author"`
