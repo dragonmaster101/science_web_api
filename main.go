@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dragonmaster101/acweb_api/database"
+	"github.com/dragonmaster101/science_web_api/database"
 	"github.com/gin-gonic/gin"
 )
 

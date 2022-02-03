@@ -228,3 +228,67 @@ func (i *Instance) AuthenticateUserInfo(form *AuthenticatorForm) (bool, error) {
 		return false, fmt.Errorf("you have not specified if the password is hashed or not using the hashed field")
 	}
 }
+
+
+/*
+<Post 
+            title="Quantum Pacman"
+            author="Omer Ali Malik"
+            date="29 February 2020"
+            url="https://www.youtube.com/watch?v=LMagNcngvcU&ab_channel=JavaScriptMastery"
+            description="This is a game that uses quantum circuits and qauntum game theory to simulate pacman in an entangled state instance. Winners and losers are just predicted"
+            card={false}
+        />
+*/
+
+type Post struct {
+	Title  		string `json:"title"`
+	Author 		string `json:"author"`
+	Date   		string `json:"date"`
+	Url    		string `json:"url"`
+	Description string `json:"description"`
+}
+
+const postsPath = "posts";
+
+func (i *Instance) CreatePostInfo(post *Post) error {
+	switch post {
+	case nil:
+		return fmt.Errorf("post paramater is nil");
+	default:
+	}	
+	
+	ref := i.database.NewRef("");
+	postsRef := ref.Child(postsPath);
+	newPostRef , postRefErr := postsRef.Push(i.ctx , nil);
+
+	if postRefErr != nil {
+		return fmt.Errorf("unable to get new reference for this post , err : %v" , postRefErr);
+	}
+
+	newPostRef.Set(i.ctx , post);
+	
+	return nil;
+}
+
+func (i *Instance) GetPostsInfo() ([]Post , error) {
+	ref := i.database.NewRef("");
+	postsRef := ref.Child(postsPath);
+
+	var posts []Post;
+
+	titleResults , titleQueryErr := postsRef.OrderByChild("title").GetOrdered(i.ctx);
+	if titleQueryErr != nil {
+		return nil , fmt.Errorf("error querying posts by titles from firebase database , err : %v" , titleQueryErr);
+	}
+
+	for _ , title := range titleResults {
+		var post Post 
+		if err := title.Unmarshal(&post); err != nil {
+			return nil , fmt.Errorf("error decoding post data from title query results , err : %v" , err);
+		}
+		posts = append(posts, post);
+	}
+
+	return posts , nil;
+}
