@@ -252,6 +252,14 @@ type Post struct {
 	Description string `json:"description"`
 }
 
+type NilPost struct {
+	Title  		*string `json:"title"`
+	Author 		*string `json:"author"`
+	Date   		*string `json:"date"`
+	Url    		*string `json:"url"`
+	Description *string `json:"description"`
+}
+
 const postsPath = "posts";
 
 func (i *Instance) CreatePostInfo(post *Post) error {
@@ -368,4 +376,45 @@ func (i *Instance) SearchPostsAuthor(query string) ([]Post , error) {
 	}
 
 	return filteredPosts , nil;
+}
+
+func PostSame(postA *Post , postB *Post) bool {
+	return postA.Title == postB.Title;
+}
+
+func PostIsDuplicate(posts []Post , postCmp *Post) bool {
+	for _ , post := range posts {
+		return PostSame(&post , postCmp);
+	} 
+	return true;
+}
+
+func (i *Instance) SearchPosts(query string) ([]Post , error) {
+	titlePosts , titleQueryErr := i.SearchPostsTitle(query);
+	if titleQueryErr != nil {
+		return nil , titleQueryErr;
+	}
+
+	authorPosts , authorQueryErr := i.SearchPostsAuthor(query);
+	if authorQueryErr != nil {
+		return nil , authorQueryErr;
+	}
+
+	var posts []Post;
+	if len(titlePosts) != 0 {
+		posts = titlePosts;
+		for _ , authorPost := range authorPosts {
+			if !PostIsDuplicate(posts , &authorPost) {
+				posts = append(posts, authorPost);
+			}
+		}
+	} else {
+		if len(authorPosts) == 0 {
+			return nil , nil;
+		} else {
+			posts = authorPosts;
+		}
+	}
+
+	return posts , nil;
 }

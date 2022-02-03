@@ -34,9 +34,11 @@ func main(){
 	// 	log.Printf("Post : %v\n" , result);
 	// }
 
-	fPosts , err := db.SearchPostsAuthor("malik");
+	fPosts , err := db.SearchPosts("second");
 	if err != nil {
 		log.Fatal(err);
 	}
-	log.Printf("fPosts : %v\n" , fPosts);
+	for _ , result := range fPosts {
+		log.Printf("Post : %v\n" , result);
+	}
 }
