@@ -329,3 +329,38 @@ func (i *Instance) SearchPostsTitle(query string) ([]Post , error) {
 
 	return filteredPosts , nil;
 }
+
+func (i *Instance) SearchPostsAuthor(query string) ([]Post , error) {
+	ref := i.database.NewRef("");
+	postsRef := ref.Child(postsPath);
+
+	var authors []string;
+	var posts []Post;
+
+	authorResults , authorQueryErr := postsRef.OrderByChild("title").GetOrdered(i.ctx);
+	if authorQueryErr != nil {
+		return nil , fmt.Errorf("error querying posts by Authors from firebase database , err : %v" , authorQueryErr);
+	}
+
+	for _ , author := range authorResults {
+		var post Post 
+		if err := author.Unmarshal(&post); err != nil {
+			return nil , fmt.Errorf("error decoding Post data from Author query Results , err : %v" , err);
+		}
+		authors = append(authors , post.Author);
+		posts = append(posts, post);
+	}
+
+	indices , ok := algorithms.SearchStrings(authors , query);
+	if !ok {
+		return nil , nil;
+	}
+
+	var filteredPosts []Post;
+
+	for _ , index := range indices {
+		filteredPosts = append(filteredPosts , posts[index]);
+	}
+
+	return filteredPosts , nil;
+}

@@ -12,17 +12,17 @@ func main(){
 
 	var err error
 
-	post := database.Post{
-		Title: "A A post that should come second",
-		Author: "Omer Ali Malik",
-		Date : "3 February , 2022",
-		Url : "nothing",
-		Description: "just testing",
-	};
-	err = db.CreatePostInfo(&post);
-	if err != nil {
-		log.Fatal(err);
-	}
+	// post := database.Post{
+	// 	Title: "A A post that should come second",
+	// 	Author: "Omer Ali Malik",
+	// 	Date : "3 February , 2022",
+	// 	Url : "nothing",
+	// 	Description: "just testing",
+	// };
+	// err = db.CreatePostInfo(&post);
+	// if err != nil {
+	// 	log.Fatal(err);
+	// }
 
 	results , err := db.GetPostsInfo()
 	if err != nil {
@@ -34,7 +34,7 @@ func main(){
 		log.Printf("Post : %v\n" , result);
 	}
 
-	fPosts , err := db.SearchPostsTitle("second");
+	fPosts , err := db.SearchPostsAuthor("Zain");
 	if err != nil {
 		log.Fatal(err);
 	}
