@@ -148,7 +148,7 @@ Updates the User information given the userId i.e email or username. The caller 
 E.g
 {
 	username: "Username"
-} This struct is a valid parameter
+} This struct is a valid argument to the function
 */
 func (i *Instance) UpdateUserInfo(userID string, newAcc *NilAccount) error {
 
@@ -304,6 +304,22 @@ func (i *Instance) GetPostsInfo() ([]Post , error) {
 	return posts , nil;
 }
 
+func (i *Instance) GetPostInfo(postID string) (*Post , error) {
+	ref := i.database.NewRef(postsPath + "/" + postID);
+	post := Post{};
+	err := ref.Get(i.ctx , &post);
+	if err != nil {
+		return nil , fmt.Errorf("error trying to retrieve post by this post id , err : %v" , err);
+	}
+
+	return &post , nil;
+}
+
+
+
+/*---------------------------- SEARCH POSTS METHODS START ----------------------------*/
+
+
 func (i *Instance) SearchPostsTitle(query string) ([]Post , error) {
 	query = strings.ToLower(query);
 
@@ -417,4 +433,62 @@ func (i *Instance) SearchPosts(query string) ([]Post , error) {
 	}
 
 	return posts , nil;
+}
+
+/*-------------------------------------- SEARCH POSTS METHODS END -------------------------------------------*/
+
+func (i *Instance) UpdatePostInfo(postID string , updatedPost *NilPost) error{
+	oldPost , oldPostErr := i.GetPostInfo(postID);
+	if oldPostErr != nil {
+		return fmt.Errorf("error in post update , error fetching post (maybe doesn't exist) , err : %v" , oldPostErr);
+	}
+
+	switch updatedPost {
+	case nil:
+		return nil;
+	}
+
+
+	switch updatedPost.Author {
+	case nil:
+		break;
+	default:
+		oldPost.Author = *updatedPost.Author;
+	}
+
+	switch updatedPost.Date {
+	case nil:
+		break;
+	default:
+		oldPost.Date = *updatedPost.Date;
+	}
+
+	switch updatedPost.Description {
+	case nil:
+		break;
+	default:
+		oldPost.Description = *updatedPost.Description;
+	}
+
+	switch updatedPost.Title {
+	case nil:
+		break;
+	default:
+		oldPost.Title = *updatedPost.Title;
+	}
+
+	switch updatedPost.Url {
+	case nil:
+		break;
+	default:
+		oldPost.Url = *updatedPost.Url;
+	}
+
+	ref := i.database.NewRef(postsPath + "/" + postID);
+	err := ref.Set(i.ctx , oldPost);
+	if err != nil {
+		return fmt.Errorf("error trying to retrieve post by this post id , err : %v" , err);
+	}
+
+	return nil;
 }
