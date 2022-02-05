@@ -14,6 +14,17 @@ import (
 	PATH CONSTANTS FOR EACH OPERATIONS THAT THE API PROVIDES
 */
 
+
+const userOpSearchPath = "/users/search/:userid"; // GET
+const userOpCreatePath = "/users/create"; // POST 
+const userOpUpdatePath = "users/update/:userid"; // POST 
+const userOpAuthenticatePath = "users/authenticate"; // POST 
+
+
+const postOpGetAllPath = "/posts"; // GET
+const postOpCreatePath = "post/create"; // POST 
+const postOpGetbyidPath = "post/id/:postid"; // GET
+
 /*
 	END END END END OF PATH CONSTANTS
 */
@@ -24,7 +35,9 @@ func main() {
 	db := database.Setup("school-exhibition-firebase-adminsdk-lubef-117af78def.json",
 		"https://school-exhibition-default-rtdb.asia-southeast1.firebasedatabase.app/")
 
-	router.GET("/users/search/:userid", func(c *gin.Context) {
+
+
+	router.GET(userOpSearchPath, func(c *gin.Context) {
 		userID := c.Param("userid")
 
 		account, fetchErr := db.GetUserInfo(userID)
@@ -43,25 +56,46 @@ func main() {
 		c.Data(http.StatusOK, gin.MIMEJSON, jsonData)
 	})
 
+
 	/*router.GET Methods for the database.Post type*/
 
-	router.GET("/posts" , func(c *gin.Context) {
-		posts , fetchErr := db.GetPostsInfo();
+	router.GET(postOpGetAllPath, func(c *gin.Context) {
+		posts, fetchErr := db.GetPostsInfo()
 		if fetchErr != nil {
-			c.String(http.StatusBadRequest , "error fetching the posts , err : %v" , fetchErr);
-			return;
+			c.String(http.StatusBadRequest, "error fetching the posts , err : %v", fetchErr)
+			return
 		}
 
 		jsonData, jsonConversionError := json.Marshal(database.PostArray{Posts: posts})
 		if jsonConversionError != nil {
 			c.String(http.StatusBadRequest, "internal error converting account data into json , err : %v", jsonConversionError)
-			return;
+			return
 		}
 
 		c.Data(http.StatusOK, gin.MIMEJSON, jsonData)
 	})
 
-	router.POST("/users/create", func(c *gin.Context) {
+	router.GET(postOpGetbyidPath , func(c *gin.Context) {
+		postID := c.Param("postid");
+
+		post , getPostErr := db.GetPostInfo(postID);
+		if getPostErr != nil {
+			c.String(http.StatusBadRequest , "error in retrieving the post from the database (make sure the post exists) , err : %v" , getPostErr);
+		}
+
+		
+		jsonData, jsonConversionError := json.Marshal(post)
+		if jsonConversionError != nil {
+			c.String(http.StatusBadRequest, "internal error converting account data into json , err : %v", jsonConversionError)
+			return
+		}
+
+		c.Data(http.StatusOK , gin.MIMEJSON , jsonData);
+	})
+
+	// -----------------------------------------------------------------------------------------------------
+
+	router.POST(userOpCreatePath, func(c *gin.Context) {
 		account := database.Account{}
 
 		decodeErr := json.NewDecoder(c.Request.Body).Decode(&account)
@@ -80,7 +114,7 @@ func main() {
 		c.String(http.StatusOK, "Successfully created the account")
 	})
 
-	router.POST("users/update/:userid", func(c *gin.Context) {
+	router.POST(userOpUpdatePath, func(c *gin.Context) {
 
 		userID := c.Param("userid")
 		account := &database.NilAccount{}
@@ -94,7 +128,7 @@ func main() {
 		c.String(http.StatusOK, "Successfully updated the account with the given userID")
 	})
 
-	router.POST("users/authenticate", func(c *gin.Context) {
+	router.POST(userOpAuthenticatePath, func(c *gin.Context) {
 		form := database.AuthenticatorForm{}
 
 		decodeErr := json.NewDecoder(c.Request.Body).Decode(&form)
@@ -112,26 +146,32 @@ func main() {
 		c.String(http.StatusOK, "%v", result)
 	})
 
+
+	// ---------------------------------------------------------------------------------------
+
+
 	/*router.POST methods for the Post data type*/
 
-	router.POST("post/create" , func(c *gin.Context) {
-		var post database.Post;
-		
-		decodeErr := json.NewDecoder(c.Request.Body).Decode(&post);
+	router.POST(postOpCreatePath, func(c *gin.Context) {
+		var post database.Post
+
+		decodeErr := json.NewDecoder(c.Request.Body).Decode(&post)
 		if decodeErr != nil {
 			c.String(http.StatusBadRequest,
 				"error decoding the request body make sure you followed the proper format , err : %v", decodeErr)
 			return
 		}
 
-		createErr := db.CreatePostInfo(&post);
+		createErr := db.CreatePostInfo(&post)
 		if createErr != nil {
-			c.String(http.StatusBadRequest , "error creating the post make sure you followed the proper format , err : %v" , createErr);
-			return; 
+			c.String(http.StatusBadRequest, "error creating the post make sure you followed the proper format , err : %v", createErr)
+			return
 		}
 
-		c.String(http.StatusOK , "Successfully created the post");
+		c.String(http.StatusOK, "Successfully created the post")
 	})
+
+
 
 	router.Run()
 }

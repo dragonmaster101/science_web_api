@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"strconv"
+	"strings"
 
 	"hash/fnv"
 
@@ -232,9 +232,8 @@ func (i *Instance) AuthenticateUserInfo(form *AuthenticatorForm) (bool, error) {
 	}
 }
 
-
 /*
-<Post 
+<Post
             title="Quantum Pacman"
             author="Omer Ali Malik"
             date="29 February 2020"
@@ -245,10 +244,10 @@ func (i *Instance) AuthenticateUserInfo(form *AuthenticatorForm) (bool, error) {
 */
 
 type Post struct {
-	Title  		string `json:"title"`
-	Author 		string `json:"author"`
-	Date   		string `json:"date"`
-	Url    		string `json:"url"`
+	Title       string `json:"title"`
+	Author      string `json:"author"`
+	Date        string `json:"date"`
+	Url         string `json:"url"`
 	Description string `json:"description"`
 }
 
@@ -257,242 +256,238 @@ type PostArray struct {
 }
 
 type NilPost struct {
-	Title  		*string `json:"title"`
-	Author 		*string `json:"author"`
-	Date   		*string `json:"date"`
-	Url    		*string `json:"url"`
+	Title       *string `json:"title"`
+	Author      *string `json:"author"`
+	Date        *string `json:"date"`
+	Url         *string `json:"url"`
 	Description *string `json:"description"`
 }
 
-const postsPath = "posts";
+const postsPath = "posts"
 
 func (i *Instance) CreatePostInfo(post *Post) error {
 	switch post {
 	case nil:
-		return fmt.Errorf("post paramater is nil");
+		return fmt.Errorf("post paramater is nil")
 	default:
-	}	
-	
-	ref := i.database.NewRef("");
-	postsRef := ref.Child(postsPath);
-	newPostRef , postRefErr := postsRef.Push(i.ctx , nil);
+	}
+
+	ref := i.database.NewRef("")
+	postsRef := ref.Child(postsPath)
+	newPostRef, postRefErr := postsRef.Push(i.ctx, nil)
 
 	if postRefErr != nil {
-		return fmt.Errorf("unable to get new reference for this post , err : %v" , postRefErr);
+		return fmt.Errorf("unable to get new reference for this post , err : %v", postRefErr)
 	}
 
-	newPostRef.Set(i.ctx , post);
-	
-	return nil;
+	newPostRef.Set(i.ctx, post)
+
+	return nil
 }
 
-func (i *Instance) GetPostsInfo() ([]Post , error) {
-	ref := i.database.NewRef("");
-	postsRef := ref.Child(postsPath);
+func (i *Instance) GetPostsInfo() ([]Post, error) {
+	ref := i.database.NewRef("")
+	postsRef := ref.Child(postsPath)
 
-	var posts []Post;
+	var posts []Post
 
-	titleResults , titleQueryErr := postsRef.OrderByChild("title").GetOrdered(i.ctx);
+	titleResults, titleQueryErr := postsRef.OrderByChild("title").GetOrdered(i.ctx)
 	if titleQueryErr != nil {
-		return nil , fmt.Errorf("error querying posts by titles from firebase database , err : %v" , titleQueryErr);
+		return nil, fmt.Errorf("error querying posts by titles from firebase database , err : %v", titleQueryErr)
 	}
 
-	for _ , title := range titleResults {
-		var post Post 
+	for _, title := range titleResults {
+		var post Post
 		if err := title.Unmarshal(&post); err != nil {
-			return nil , fmt.Errorf("error decoding post data from title query results , err : %v" , err);
+			return nil, fmt.Errorf("error decoding post data from title query results , err : %v", err)
 		}
-		posts = append(posts, post);
+		posts = append(posts, post)
 	}
 
-	return posts , nil;
+	return posts, nil
 }
 
-func (i *Instance) GetPostInfo(postID string) (*Post , error) {
-	ref := i.database.NewRef(postsPath + "/" + postID);
-	post := Post{};
-	err := ref.Get(i.ctx , &post);
+func (i *Instance) GetPostInfo(postID string) (*Post, error) {
+	ref := i.database.NewRef(postsPath + "/" + postID)
+	post := Post{}
+	err := ref.Get(i.ctx, &post)
 	if err != nil {
-		return nil , fmt.Errorf("error trying to retrieve post by this post id , err : %v" , err);
+		return nil, fmt.Errorf("error trying to retrieve post by this post id , err : %v", err)
 	}
 
-	return &post , nil;
+	return &post, nil
 }
-
-
 
 /*---------------------------- SEARCH POSTS METHODS START ----------------------------*/
 
+func (i *Instance) SearchPostsTitle(query string) ([]Post, error) {
+	query = strings.ToLower(query)
 
-func (i *Instance) SearchPostsTitle(query string) ([]Post , error) {
-	query = strings.ToLower(query);
+	ref := i.database.NewRef("")
+	postsRef := ref.Child(postsPath)
 
-	ref := i.database.NewRef("");
-	postsRef := ref.Child(postsPath);
+	var titles []string
+	var posts []Post
 
-	var titles []string;
-	var posts []Post;
-
-	titleResults , titleQueryErr := postsRef.OrderByChild("title").GetOrdered(i.ctx);
+	titleResults, titleQueryErr := postsRef.OrderByChild("title").GetOrdered(i.ctx)
 	if titleQueryErr != nil {
-		return nil , fmt.Errorf("error querying posts by titles from firebase database , err : %v" , titleQueryErr);
+		return nil, fmt.Errorf("error querying posts by titles from firebase database , err : %v", titleQueryErr)
 	}
 
-	for _ , title := range titleResults {
-		var post Post 
+	for _, title := range titleResults {
+		var post Post
 		if err := title.Unmarshal(&post); err != nil {
-			return nil , fmt.Errorf("error decoding Post data from title query Results , err : %v" , err);
+			return nil, fmt.Errorf("error decoding Post data from title query Results , err : %v", err)
 		}
-		titles = append(titles , strings.ToLower(post.Title));
-		posts = append(posts, post);
+		titles = append(titles, strings.ToLower(post.Title))
+		posts = append(posts, post)
 	}
 
-	indices , ok := algorithms.SearchStrings(titles , query);
+	indices, ok := algorithms.SearchStrings(titles, query)
 	if !ok {
-		return nil , nil;
+		return nil, nil
 	}
 
-	var filteredPosts []Post;
+	var filteredPosts []Post
 
-	for _ , index := range indices {
-		filteredPosts = append(filteredPosts , posts[index]);
+	for _, index := range indices {
+		filteredPosts = append(filteredPosts, posts[index])
 	}
 
-	return filteredPosts , nil;
+	return filteredPosts, nil
 }
 
-func (i *Instance) SearchPostsAuthor(query string) ([]Post , error) {
-	query = strings.ToLower(query);
+func (i *Instance) SearchPostsAuthor(query string) ([]Post, error) {
+	query = strings.ToLower(query)
 
-	ref := i.database.NewRef("");
-	postsRef := ref.Child(postsPath);
+	ref := i.database.NewRef("")
+	postsRef := ref.Child(postsPath)
 
-	var authors []string;
-	var posts []Post;
+	var authors []string
+	var posts []Post
 
-	authorResults , authorQueryErr := postsRef.OrderByChild("title").GetOrdered(i.ctx);
+	authorResults, authorQueryErr := postsRef.OrderByChild("title").GetOrdered(i.ctx)
 	if authorQueryErr != nil {
-		return nil , fmt.Errorf("error querying posts by Authors from firebase database , err : %v" , authorQueryErr);
+		return nil, fmt.Errorf("error querying posts by Authors from firebase database , err : %v", authorQueryErr)
 	}
 
-	for _ , author := range authorResults {
-		var post Post 
+	for _, author := range authorResults {
+		var post Post
 		if err := author.Unmarshal(&post); err != nil {
-			return nil , fmt.Errorf("error decoding Post data from Author query Results , err : %v" , err);
+			return nil, fmt.Errorf("error decoding Post data from Author query Results , err : %v", err)
 		}
-		authors = append(authors , strings.ToLower(post.Author));
-		posts = append(posts, post);
+		authors = append(authors, strings.ToLower(post.Author))
+		posts = append(posts, post)
 	}
 
-	indices , ok := algorithms.SearchStrings(authors , query);
+	indices, ok := algorithms.SearchStrings(authors, query)
 	if !ok {
-		return nil , nil;
+		return nil, nil
 	}
 
-	var filteredPosts []Post;
+	var filteredPosts []Post
 
-	for _ , index := range indices {
-		filteredPosts = append(filteredPosts , posts[index]);
+	for _, index := range indices {
+		filteredPosts = append(filteredPosts, posts[index])
 	}
 
-	return filteredPosts , nil;
+	return filteredPosts, nil
 }
 
-func PostSame(postA *Post , postB *Post) bool {
-	return postA.Title == postB.Title;
+func PostSame(postA *Post, postB *Post) bool {
+	return postA.Title == postB.Title
 }
 
-func PostIsDuplicate(posts []Post , postCmp *Post) bool {
-	for _ , post := range posts {
-		return PostSame(&post , postCmp);
-	} 
-	return true;
+func PostIsDuplicate(posts []Post, postCmp *Post) bool {
+	for _, post := range posts {
+		return PostSame(&post, postCmp)
+	}
+	return true
 }
 
-func (i *Instance) SearchPosts(query string) ([]Post , error) {
-	titlePosts , titleQueryErr := i.SearchPostsTitle(query);
+func (i *Instance) SearchPosts(query string) ([]Post, error) {
+	titlePosts, titleQueryErr := i.SearchPostsTitle(query)
 	if titleQueryErr != nil {
-		return nil , titleQueryErr;
+		return nil, titleQueryErr
 	}
 
-	authorPosts , authorQueryErr := i.SearchPostsAuthor(query);
+	authorPosts, authorQueryErr := i.SearchPostsAuthor(query)
 	if authorQueryErr != nil {
-		return nil , authorQueryErr;
+		return nil, authorQueryErr
 	}
 
-	var posts []Post;
+	var posts []Post
 	if len(titlePosts) != 0 {
-		posts = titlePosts;
-		for _ , authorPost := range authorPosts {
-			if !PostIsDuplicate(posts , &authorPost) {
-				posts = append(posts, authorPost);
+		posts = titlePosts
+		for _, authorPost := range authorPosts {
+			if !PostIsDuplicate(posts, &authorPost) {
+				posts = append(posts, authorPost)
 			}
 		}
 	} else {
 		if len(authorPosts) == 0 {
-			return nil , nil;
+			return nil, nil
 		} else {
-			posts = authorPosts;
+			posts = authorPosts
 		}
 	}
 
-	return posts , nil;
+	return posts, nil
 }
 
 /*-------------------------------------- SEARCH POSTS METHODS END -------------------------------------------*/
 
-func (i *Instance) UpdatePostInfo(postID string , updatedPost *NilPost) error{
-	oldPost , oldPostErr := i.GetPostInfo(postID);
+func (i *Instance) UpdatePostInfo(postID string, updatedPost *NilPost) error {
+	oldPost, oldPostErr := i.GetPostInfo(postID)
 	if oldPostErr != nil {
-		return fmt.Errorf("error in post update , error fetching post (maybe doesn't exist) , err : %v" , oldPostErr);
+		return fmt.Errorf("error in post update , error fetching post (maybe doesn't exist) , err : %v", oldPostErr)
 	}
 
 	switch updatedPost {
 	case nil:
-		return nil;
+		return nil
 	}
-
 
 	switch updatedPost.Author {
 	case nil:
-		break;
+		break
 	default:
-		oldPost.Author = *updatedPost.Author;
+		oldPost.Author = *updatedPost.Author
 	}
 
 	switch updatedPost.Date {
 	case nil:
-		break;
+		break
 	default:
-		oldPost.Date = *updatedPost.Date;
+		oldPost.Date = *updatedPost.Date
 	}
 
 	switch updatedPost.Description {
 	case nil:
-		break;
+		break
 	default:
-		oldPost.Description = *updatedPost.Description;
+		oldPost.Description = *updatedPost.Description
 	}
 
 	switch updatedPost.Title {
 	case nil:
-		break;
+		break
 	default:
-		oldPost.Title = *updatedPost.Title;
+		oldPost.Title = *updatedPost.Title
 	}
 
 	switch updatedPost.Url {
 	case nil:
-		break;
+		break
 	default:
-		oldPost.Url = *updatedPost.Url;
+		oldPost.Url = *updatedPost.Url
 	}
 
-	ref := i.database.NewRef(postsPath + "/" + postID);
-	err := ref.Set(i.ctx , oldPost);
+	ref := i.database.NewRef(postsPath + "/" + postID)
+	err := ref.Set(i.ctx, oldPost)
 	if err != nil {
-		return fmt.Errorf("error trying to retrieve post by this post id , err : %v" , err);
+		return fmt.Errorf("error trying to retrieve post by this post id , err : %v", err)
 	}
 
-	return nil;
+	return nil
 }
