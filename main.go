@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/dragonmaster101/science_web_api/database"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,16 +15,14 @@ import (
 	PATH CONSTANTS FOR EACH OPERATIONS THAT THE API PROVIDES
 */
 
+const userOpSearchPath = "/users/search/:userid"    // GET
+const userOpCreatePath = "/users/create"            // POST
+const userOpUpdatePath = "users/update/:userid"     // POST
+const userOpAuthenticatePath = "users/authenticate" // POST
 
-const userOpSearchPath = "/users/search/:userid"; // GET
-const userOpCreatePath = "/users/create"; // POST 
-const userOpUpdatePath = "users/update/:userid"; // POST 
-const userOpAuthenticatePath = "users/authenticate"; // POST 
-
-
-const postOpGetAllPath = "/posts"; // GET
-const postOpCreatePath = "post/create"; // POST 
-const postOpGetbyidPath = "post/id/:postid"; // GET
+const postOpGetAllPath = "/posts"           // GET
+const postOpCreatePath = "post/create"      // POST
+const postOpGetbyidPath = "post/id/:postid" // GET
 
 /*
 	END END END END OF PATH CONSTANTS
@@ -32,10 +31,15 @@ const postOpGetbyidPath = "post/id/:postid"; // GET
 func main() {
 	router := gin.Default()
 
+	config := cors.DefaultConfig()
+	// config.AllowOrigins = []string{"http://google.com"}
+	// config.AllowOrigins == []string{"http://google.com", "http://facebook.com"}
+	config.AllowAllOrigins = true
+
+	router.Use(cors.New(config))
+
 	db := database.Setup("school-exhibition-firebase-adminsdk-lubef-117af78def.json",
 		"https://school-exhibition-default-rtdb.asia-southeast1.firebasedatabase.app/")
-
-
 
 	router.GET(userOpSearchPath, func(c *gin.Context) {
 		userID := c.Param("userid")
@@ -56,7 +60,6 @@ func main() {
 		c.Data(http.StatusOK, gin.MIMEJSON, jsonData)
 	})
 
-
 	/*router.GET Methods for the database.Post type*/
 
 	router.GET(postOpGetAllPath, func(c *gin.Context) {
@@ -75,22 +78,21 @@ func main() {
 		c.Data(http.StatusOK, gin.MIMEJSON, jsonData)
 	})
 
-	router.GET(postOpGetbyidPath , func(c *gin.Context) {
-		postID := c.Param("postid");
+	router.GET(postOpGetbyidPath, func(c *gin.Context) {
+		postID := c.Param("postid")
 
-		post , getPostErr := db.GetPostInfo(postID);
+		post, getPostErr := db.GetPostInfo(postID)
 		if getPostErr != nil {
-			c.String(http.StatusBadRequest , "error in retrieving the post from the database (make sure the post exists) , err : %v" , getPostErr);
+			c.String(http.StatusBadRequest, "error in retrieving the post from the database (make sure the post exists) , err : %v", getPostErr)
 		}
 
-		
 		jsonData, jsonConversionError := json.Marshal(post)
 		if jsonConversionError != nil {
 			c.String(http.StatusBadRequest, "internal error converting account data into json , err : %v", jsonConversionError)
 			return
 		}
 
-		c.Data(http.StatusOK , gin.MIMEJSON , jsonData);
+		c.Data(http.StatusOK, gin.MIMEJSON, jsonData)
 	})
 
 	// -----------------------------------------------------------------------------------------------------
@@ -146,9 +148,7 @@ func main() {
 		c.String(http.StatusOK, "%v", result)
 	})
 
-
 	// ---------------------------------------------------------------------------------------
-
 
 	/*router.POST methods for the Post data type*/
 
@@ -170,8 +170,6 @@ func main() {
 
 		c.String(http.StatusOK, "Successfully created the post")
 	})
-
-
 
 	router.Run()
 }
